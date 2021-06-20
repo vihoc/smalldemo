@@ -62,6 +62,12 @@ public:
 		msg.header.id = ServerMsgType::User_Loginin;
 		Send(msg);
 	}
+
+
+
+
+private:
+	
 };
 
 int main()
@@ -101,6 +107,9 @@ int main()
 				case ServerMsgType::ServerAccept:
 				{			
 					std::cout << "Server Accepted Connection\n";
+					//temp , here will be login function
+					//after login, the start heartbeat
+					c.startHeartBeat();
 				}
 				break;
 
@@ -120,6 +129,13 @@ int main()
 					msg >> clientID;
 					std::cout << "Hello from [" << clientID << "]\n";
 				}
+
+				case ServerMsgType::HeartBeat:
+				{
+
+					std::cout << "server works fine\n";
+				}
+
 				break;
 				}
 			}

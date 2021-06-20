@@ -181,6 +181,22 @@ namespace netCommon
 					}
 				});
 		}
+
+		template <typename Buffer>
+		void async_read(Buffer readbuffer, std::function<void(asio::error_code, std::size_t)> callback)
+		{
+			//auto self = this->shared_from_this();
+			asio::async_read(m_socket, readbuffer, std::bind(callback, std::placeholders::_1, std::placeholders::_2));
+
+		}
+		template <typename Buffer>
+		void async_write(Buffer writebuffer, std::function<void(asio::error_code, std::size_t)> callback)
+		{
+			//auto self = this->shared_from_this();
+			asio::async_write(m_socket, writebuffer, std::bind(callback, std::placeholders::_1, std::placeholders::_2));
+
+		}
+
 	private:
 
 		void WriteHeader()
@@ -379,6 +395,8 @@ namespace netCommon
 						}
 					});
 			}
+
+
 
 	protected:
 		uint32_t id = 0;
