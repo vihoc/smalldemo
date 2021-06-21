@@ -6,6 +6,7 @@
 #include "NetMessages.h"
 #include "NetConection.h"
 
+#include "ServerHeartBeat.h"
 namespace netCommon
 {
 	template <typename T>
@@ -18,8 +19,9 @@ namespace netCommon
 	public:
 		server_Interface(uint16_t port)
 			:m_asioAcceptor(m_asioContext, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
+			, m_port{port}
 		{
-
+			
 		}
 		virtual ~server_Interface()
 		{
@@ -33,6 +35,8 @@ namespace netCommon
 				WaitForClientConnection();
 
 				m_contextthread = std::thread([this]() {m_asioContext.run(); });
+				
+
 			}
 			catch (std::exception& e)
 			{
@@ -40,13 +44,19 @@ namespace netCommon
 				return false;
 			}
 			std::cout << "[Server] Start!" << "\n";
+			
+			heartbeat = std::make_unique<serverHeartbeat_Interface<T>>(m_port + heartbeatoffportset);
+			heartbeat->Start();
+
 			return true;
 		}
 		void Stop()
 		{
 			m_asioContext.stop();
+			heartbeat->Stop();
 			if (m_contextthread.joinable()) m_contextthread.join();
 			std::cout << "[Server] Stop!" << "\n";
+
 		}
 
 		void WaitForClientConnection()
@@ -79,6 +89,17 @@ namespace netCommon
 					WaitForClientConnection();
 				});
 		}
+
+		void clientDisconnect(std::shared_ptr<connection_type> client)
+		{
+			OnClientDisconnect(client);
+			client.reset();
+		}
+
+		void clearConnectDeque()
+		{
+			m_deqConnection.erase(std::remove(m_deqConnection.begin(), m_deqConnection.end(), nullptr), m_deqConnection.end());
+		}
 		void NoticeClient(std::shared_ptr<connection_type> client, const message_type& msg)
 		{
 			if (client)
@@ -89,9 +110,8 @@ namespace netCommon
 				}
 				else
 				{
-					OnClientDisconnect(client);
-					client.reset();
-					m_deqConnection.erase(std::remove(m_deqConnection.begin(), m_deqConnection.end(), client), m_deqConnection.end());
+					clientDisconnect(client);
+					clearConnectDeque();
 				}
 			}
 		}
@@ -111,14 +131,13 @@ namespace netCommon
 				}
 				else
 				{
-					OnClientDisconnect(client);
-					client.reset();
+					clientDisconnect(client);
 					InvaildClient = true;
 				}
 			}
 			if (InvaildClient)
 			{
-				m_deqConnection.erase(std::remove(m_deqConnection.begin(), m_deqConnection.end(), nullptr), m_deqConnection.end());
+				clearConnectDeque();
 			}
 			return true;
 		}
@@ -157,6 +176,7 @@ public:
 		}
 
 	private:
+		uint16_t m_port;
 		uint32_t m_nIDCounter = 10000;
 		asio::io_context m_asioContext;
 		std::thread m_contextthread;
@@ -164,6 +184,7 @@ public:
 		
 		Ts_queue<owned_Message<T>> m_qMessageIn;
 		std::deque<std::shared_ptr<connection_type>> m_deqConnection;
+		std::unique_ptr<serverHeartbeat_Interface<T>> heartbeat; 
 	};
 }
 

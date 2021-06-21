@@ -6,9 +6,14 @@
 #include "NetMessages.h"
 #include "NetServer.h"
 
+#include "ServerHeartBeat.h"
 namespace netCommon
 {
+	template <typename T>
+	class server_Interface;
 
+	template <typename T>
+	class heartbeat_Interface;
 
 	template <typename T>
 	struct CheckValidation
@@ -107,7 +112,7 @@ namespace netCommon
 
 		virtual ~Connection()
 		{
-			std::cerr << "Connection Crushed" << "\n";
+			//std::cerr << "Connection Crushed" << "\n";
 		}
 		uint32_t GetId()
 		{
@@ -149,6 +154,35 @@ namespace netCommon
 					});
 			}
 
+		}
+
+		void ConnectHeartbeatToServer(const asio::ip::tcp::resolver::results_type& endpoint)
+		{
+			if (owner::client == m_ownerType)
+			{
+				// Request asio attempts to connect to an endpoint
+				asio::async_connect(m_socket, endpoint,
+					[this](std::error_code ec, asio::ip::tcp::endpoint endpoint)
+					{
+						if (!ec)
+						{
+							ReadHeader();
+						}
+					});
+			}
+		}
+
+		void ConnectHeartbeatToClient(netCommon::serverHeartbeat_Interface<T>* server, uint32_t uid = 0)
+		{
+			if (owner::server == m_ownerType)
+			{
+				if (m_socket.is_open())
+				{
+					id = uid;
+					ReadHeader();
+					
+				}
+			}
 		}
 		
 		void Disconnect()
@@ -330,8 +364,6 @@ namespace netCommon
 
 		private:
 
-
-			// ASYNC - Used by both client and server to write validation packet
 			void WriteValidation()
 			{
 				
@@ -341,6 +373,7 @@ namespace netCommon
 					{
 						if (!ec)
 						{
+							
 							if (owner::client == self->m_ownerType) self->ReadHeader();
 						}
 						else
@@ -359,9 +392,10 @@ namespace netCommon
 					{
 						if (!ec)
 						{
+							
 							if (owner::server == self->m_ownerType)
 							{
-
+								
 								if (self->m_handeshake.m_nHandshakeIn == self->m_handeshake.m_nHandshakeCheck)
 								{
 									
@@ -383,7 +417,7 @@ namespace netCommon
 							{
 
 								self->m_handeshake.m_nHandshakeOut = self->m_handeshake.scramble(self->m_handeshake.m_nHandshakeIn);
-
+								
 								self->WriteValidation();
 							}
 						}

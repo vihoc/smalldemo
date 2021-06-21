@@ -31,6 +31,7 @@ namespace netCommon
 			//end
 
 			HeartBeat,
+			HeartBeatStart,
 			ServerMessage
 		};
 

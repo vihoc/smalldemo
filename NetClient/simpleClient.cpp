@@ -1,6 +1,7 @@
 #include "BaseHeader.h"
 #include "TypeHeader.h"
 #include "NetClient.h"
+#include "ClientHeartBeat.h"
 // template<typename MessageType>
 // class CustomClient :public netCommon::client_Interface<MessageType>
 // {
@@ -34,8 +35,11 @@
 // 	return 0;
 // }
 using ServerMsgType = netCommon::Type::ServerMsgType;
-class CustomClient : public netCommon::client_Interface<ServerMsgType>
+class CustomClient : public netCommon::client_Interface<ServerMsgType> 
 {
+public:
+// 	CustomClient() {}
+// 	~CustomClient() {}
 public:
 	void PingServer()
 	{
@@ -62,7 +66,6 @@ public:
 		msg.header.id = ServerMsgType::User_Loginin;
 		Send(msg);
 	}
-
 
 
 
@@ -96,20 +99,21 @@ int main()
 
 		if (c.IsConnected())
 		{
-			if (!c.Incoming().empty())
+			auto& messagequeue = c.Incoming();
+			if (!messagequeue.empty())
 			{
 
 
-				auto msg = c.Incoming().pop_front().msg;
+				auto msg = messagequeue.pop_front().msg;
 
 				switch (msg.header.id)
 				{
 				case ServerMsgType::ServerAccept:
-				{			
+				{
 					std::cout << "Server Accepted Connection\n";
 					//temp , here will be login function
 					//after login, the start heartbeat
-					c.startHeartBeat();
+					c.startHeartBeat("127.0.0.1", 60000);
 				}
 				break;
 
@@ -129,11 +133,17 @@ int main()
 					msg >> clientID;
 					std::cout << "Hello from [" << clientID << "]\n";
 				}
-
+				break;
 				case ServerMsgType::HeartBeat:
 				{
 
 					std::cout << "server works fine\n";
+				}
+				break;
+				case ServerMsgType::HeartBeatStart:
+				{
+
+					std::cout << "HeartBeatStart\n";
 				}
 
 				break;

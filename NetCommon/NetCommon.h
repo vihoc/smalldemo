@@ -20,10 +20,13 @@
 #include <algorithm>
 #include <functional>
 
-//#define ASIO_STANDALONE
+#define ASIO_STANDALONE
 #include <asio.hpp>
 #include <asio/ts/buffer.hpp>
 #include <asio/ts/internet.hpp>
 #include "asio/steady_timer.hpp"
+
+
+#include "CommonConst.h"
 
 #endif//end of __NETCOMMON_H__

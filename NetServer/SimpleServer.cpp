@@ -33,7 +33,7 @@ protected:
 	{
 		BEGIN_PROCESS_MESSAGE(msg.header.id)
 			PROCESS_MESSAGE_ITEM(netCommon::Type::ServerMsgType::ServerPing, Pingmsg, client, msg)
-			PROCESS_MESSAGE_ITEM(netCommon::Type::ServerMsgType::HeartBeat, HeartBeate, client, msg)
+			//PROCESS_MESSAGE_ITEM(netCommon::Type::ServerMsgType::HeartBeat, HeartBeate, client, msg)
 			PROCESS_MESSAGE_ITEM(netCommon::Type::ServerMsgType::MessageAll, NoticeAll, msg, client)
 		END_PROCESS_MESSAGE
 
@@ -70,13 +70,7 @@ public:
 		return true;
 	}
 
-	bool HeartBeate(serverPtr client, CustomServer::message_type& msg)
-	{
-		std::cout << "[" << client->GetId() << "]: HeateBeat\n";
 
-		client->Send(msg);
-		return true;
-	}
 
 };
 
