@@ -39,6 +39,20 @@ namespace netCommon
 		{
 			User_Loginin
 		};
+
+
+		enum class DemoMsgType : uint32_t
+		{
+			ServerAccept,
+			ServerDeny,
+			Client_Accepted,
+			HeartBeat,
+			HeartBeatStart,
+
+			RequestMapSeedReq,
+			RequestMapSeedAck
+
+		};
 	}
 }
 

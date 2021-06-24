@@ -102,6 +102,7 @@ namespace netCommon
 			:m_asioContext(asio_context), m_socket(std::move(socket)), m_qMessageIn(queuereference)
 		{
 			m_ownerType = parent;
+			time_out = std::make_unique<asio::steady_timer>(m_asioContext);
 			if (owner::server == m_ownerType)
 			{
 				m_handeshake.m_nHandshakeOut = uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
@@ -130,12 +131,13 @@ namespace netCommon
 			{
 				if (m_socket.is_open())
 				{
+					time_out->cancel();
 					id = uid;
-					//ReadHeader();
 					WriteValidation();
 					ReadValidation(server);
 				}
 			}
+			ConnectTimeOutHander();
 		}
 
 		void ConnectToServer(const asio::ip::tcp::resolver::results_type& endpoints)
@@ -148,10 +150,11 @@ namespace netCommon
 					{
 						if (!ec)
 						{
-							//ReadHeader();
+							time_out->cancel();
 							ReadValidation();
 						}
 					});
+				ConnectTimeOutHander();
 			}
 
 		}
@@ -166,9 +169,11 @@ namespace netCommon
 					{
 						if (!ec)
 						{
+							time_out->cancel();
 							ReadHeader();
 						}
 					});
+				ConnectTimeOutHander();
 			}
 		}
 
@@ -178,10 +183,12 @@ namespace netCommon
 			{
 				if (m_socket.is_open())
 				{
+					time_out->cancel();
 					id = uid;
 					ReadHeader();
 					
 				}
+				ConnectTimeOutHander();
 			}
 		}
 		
@@ -201,6 +208,19 @@ namespace netCommon
 		}
 
 	public:
+
+		void ConnectTimeOutHander()
+		{
+			using namespace std::chrono_literals;
+			time_out->expires_from_now(2000ms);
+			time_out->async_wait([this](const asio::error_code& ec) {
+				if (!ec) 
+				{
+					m_socket.close(); std::cerr << "Connect TimeOut!\n"; 
+				} 
+				});
+		}
+
 		void Send(const outmessage_type& msg)
 		{
 			auto self =this->shared_from_this();
@@ -438,6 +458,7 @@ namespace netCommon
 		owner m_ownerType;
 		asio::ip::tcp::socket m_socket;
 		asio::io_context& m_asioContext;
+		std::unique_ptr<asio::steady_timer> time_out;
 		Ts_queue<outmessage_type> m_qMessageOut;
 		Ts_queue<inmessage_type>& m_qMessageIn;
 	};

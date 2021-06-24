@@ -4,6 +4,45 @@
 
 namespace netCommon
 {
+
+	class Semaphore {
+	private:
+		int n_;
+		mutable std::mutex mu_;
+		std::condition_variable cv_;
+
+	public:
+		Semaphore(int n) : n_{ n } {}
+
+	public:
+		void wait() {
+			std::unique_lock<std::mutex> lock(mu_);
+			if (!n_) {
+				cv_.wait(lock, [this] {return n_; });
+			}
+			--n_;
+		}
+		template <class _Predicate>
+		void wait(_Predicate pred) {
+			std::unique_lock<std::mutex> lock(mu_);
+			if (!(std::invoke(pred) || n_)) {
+				cv_.wait(lock, [&pred, this] {return std::invoke(pred) || n_; });
+			}
+			--n_;
+		}
+
+		void signal() {
+			std::unique_lock<std::mutex> lock(mu_);
+			++n_;
+			cv_.notify_one();
+		}
+		void signalToall() {
+			std::unique_lock<std::mutex> lock(mu_);
+			++n_;
+			cv_.notify_all();
+		}
+	};
+
 	template<typename T>
 	class Ts_queue
 	{

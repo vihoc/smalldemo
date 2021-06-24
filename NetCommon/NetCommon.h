@@ -21,10 +21,12 @@
 #include <functional>
 
 #define ASIO_STANDALONE
+//#define ASIO_HAS_BOOST_DATE_TIME
 #include <asio.hpp>
 #include <asio/ts/buffer.hpp>
 #include <asio/ts/internet.hpp>
 #include "asio/steady_timer.hpp"
+//#include "asio/deadline_timer.hpp"
 
 
 #include "CommonConst.h"

@@ -148,7 +148,7 @@ namespace netCommon
 		{
 			switch (msg.header.id)
 			{
-			case netCommon::Type::ServerMsgType::HeartBeat:
+			case T::HeartBeat:
 			{
 				HeartBeat(client, msg);
 				return true;

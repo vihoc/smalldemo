@@ -82,7 +82,7 @@ namespace netCommon
 			if (!IsConnected())
 				return;
 			std::shared_ptr<ownmessage_type::message_type> msg = std::make_shared<ownmessage_type::message_type>();
-			msg->header.id = netCommon::Type::ServerMsgType::HeartBeat;
+			msg->header.id = T::HeartBeat;
 			(*msg) << "are u still there";
 			m_connection->async_write(asio::buffer(&(msg->header), sizeof(ownmessage_type::message_type::header_type)),
 				[this, msg](asio::error_code ec, std::size_t length)

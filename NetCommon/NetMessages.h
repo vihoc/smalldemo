@@ -32,7 +32,7 @@ namespace netCommon
 			return os;
 		}
 
-		template <typename DataType>
+		template <typename DataType, typename = typename std::enable_if_t<std::is_standard_layout_v<DataType> == true>>
 		friend self_type& operator << (self_type& msg, const DataType& data)
 		{
 			static_assert(std::is_standard_layout_v<DataType>, "Data is too complex to insert");
@@ -46,7 +46,7 @@ namespace netCommon
 			return msg;
 		}
 
-		template <typename DataType>
+		template <typename DataType, typename = typename std::enable_if_t<std::is_standard_layout_v<DataType> == true>>
 		friend self_type& operator >> (self_type& msg, DataType& data)
 		{
 			static_assert(std::is_standard_layout_v<DataType>, "Data is too complex to insert");
@@ -59,6 +59,33 @@ namespace netCommon
 
 			return msg;
 		}
+
+		
+		friend self_type& operator << (self_type& msg, const std::string& data)
+		{
+			
+			size_t pos = msg.body.size();
+
+			msg.body.resize(msg.body.size() + data.length());
+			std::memcpy(msg.body.data() + pos, data.data(), data.length());
+			msg.header.size = msg.size();
+
+			return msg;
+		}
+
+		
+		friend self_type& operator >> (self_type& msg, std::string& data)
+		{
+
+			size_t pos = msg.body.size() - data.length();
+			std::memcpy(data.data(), msg.body.data() + pos, data.length());
+			msg.body.resize(pos);
+
+			msg.header.size = msg.size();
+
+			return msg;
+		}
+
 	}; //end of struct message
 
 
