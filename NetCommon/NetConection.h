@@ -131,13 +131,13 @@ namespace netCommon
 			{
 				if (m_socket.is_open())
 				{
-					time_out->cancel();
+					//time_out->cancel();
 					id = uid;
 					WriteValidation();
 					ReadValidation(server);
 				}
 			}
-			ConnectTimeOutHander();
+			//ConnectTimeOutHander();
 		}
 
 		void ConnectToServer(const asio::ip::tcp::resolver::results_type& endpoints)

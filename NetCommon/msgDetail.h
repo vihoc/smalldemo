@@ -4,6 +4,7 @@
 
 namespace netCommon
 { 
+
 struct RequestServerSeedReq
 {
 	std::string msgtext = "RequestServerSeedReq";
@@ -58,6 +59,60 @@ struct RequestServerSeedack
 	}
 
 };
+struct RequestNoticeAllClientReq
+	{
+		std::string msgtext = "RequestNoticeAllClientReq";
+
+		friend std::ostream& operator << (std::ostream& os, const RequestNoticeAllClientReq& msg)
+		{
+			os << "msgtext:" << msg.msgtext;
+			return os;
+		}
+
+		template <typename T>
+		friend message<T>& operator << (message<T>& msg, const RequestNoticeAllClientReq& data)
+		{
+			msg << data.msgtext;
+			return msg;
+		}
+
+		template <typename T>
+		friend message<T>& operator >> (message<T>& msg, RequestNoticeAllClientReq& data)
+		{
+			msg >> data.msgtext;
+
+			return msg;
+		}
+	};
+
+struct RequestNoticeAllClientAck
+		{
+			std::string msgtext = "RequestNoticeAllClientReq";
+
+			friend std::ostream& operator << (std::ostream& os, const RequestNoticeAllClientAck& msg)
+			{
+				os << "msgtext:" << msg.msgtext;
+				return os;
+			}
+
+			template <typename T>
+			friend message<T>& operator << (message<T>& msg, const RequestNoticeAllClientAck& data)
+			{
+				msg << data.msgtext;
+				return msg;
+			}
+
+			template <typename T>
+			friend message<T>& operator >> (message<T>& msg, RequestNoticeAllClientAck& data)
+			{
+				msg >> data.msgtext;
+
+				return msg;
+			}
+
+	};
+
+
 
 }
 #endif // __MSG_DETAIL_H__
