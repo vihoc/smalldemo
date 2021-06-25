@@ -183,12 +183,12 @@ namespace netCommon
 			{
 				if (m_socket.is_open())
 				{
-					time_out->cancel();
+					//time_out->cancel();
 					id = uid;
 					ReadHeader();
 					
 				}
-				ConnectTimeOutHander();
+				//ConnectTimeOutHander();
 			}
 		}
 		
@@ -216,7 +216,8 @@ namespace netCommon
 			time_out->async_wait([this](const asio::error_code& ec) {
 				if (!ec) 
 				{
-					m_socket.close(); std::cerr << "Connect TimeOut!\n"; 
+					m_socket.close(); 
+					std::cerr << "Connect TimeOut!\n"; 
 				} 
 				});
 		}
