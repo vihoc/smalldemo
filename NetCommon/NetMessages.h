@@ -65,9 +65,12 @@ namespace netCommon
 		{
 			
 			size_t pos = msg.body.size();
-
-			msg.body.resize(msg.body.size() + data.length());
-			std::memcpy(msg.body.data() + pos, data.data(), data.length());
+			uint32_t size = data.length();
+			msg.body.resize(msg.body.size() + size);
+			std::memcpy(msg.body.data() + pos, data.data(), size);
+			pos = msg.body.size();
+			msg.body.resize(msg.body.size() + sizeof(uint32_t));
+			std::memcpy(msg.body.data() + pos, &size, sizeof(uint32_t));
 			msg.header.size = msg.size();
 
 			return msg;
@@ -76,9 +79,12 @@ namespace netCommon
 		
 		friend self_type& operator >> (self_type& msg, std::string& data)
 		{
-
-			size_t pos = msg.body.size() - data.length();
-			std::memcpy(data.data(), msg.body.data() + pos, data.length());
+			uint32_t size;
+			size_t pos = msg.body.size() - sizeof(uint32_t);
+			std::memcpy(&size, msg.body.data() + pos, sizeof(uint32_t));
+			msg.body.resize(pos);
+			pos = msg.body.size() - size;
+			std::memcpy(data.data(), msg.body.data() + pos, size);
 			msg.body.resize(pos);
 
 			msg.header.size = msg.size();

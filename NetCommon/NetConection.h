@@ -115,14 +115,29 @@ namespace netCommon
 		{
 			//std::cerr << "Connection Crushed" << "\n";
 		}
-		uint32_t GetId()
+		constexpr decltype(auto) GetId()
 		{
 			return id;
 		}
-		uint32_t GetId()const
+		constexpr decltype(auto) GetId()const
 		{
 			return id;
 		}
+		constexpr decltype(auto) GetUId()
+		{
+			return uid;
+		}
+		constexpr decltype(auto) GetUId()const
+		{
+			return uid;
+		}
+
+		constexpr void SetUID(uint32_t id)
+		{
+			uid = id;
+		}
+
+
 	public:
 		
 		void ConnectToClient(netCommon::server_Interface<T>* server, uint32_t uid = 0)
@@ -212,11 +227,12 @@ namespace netCommon
 		void ConnectTimeOutHander()
 		{
 			using namespace std::chrono_literals;
-			time_out->expires_from_now(2000ms);
-			time_out->async_wait([this](const asio::error_code& ec) {
+			time_out->expires_from_now(10000ms);
+			auto self = this->shared_from_this();
+			time_out->async_wait([self](const asio::error_code& ec) {
 				if (!ec) 
 				{
-					m_socket.close(); 
+					self->Disconnect();
 					std::cerr << "Connect TimeOut!\n"; 
 				} 
 				});
@@ -252,6 +268,44 @@ namespace netCommon
 
 		}
 
+		template <typename Buffer>
+		void async_read(Buffer readbuffer,std::function<void()> OnSuccess)
+		{
+			auto self = this->shared_from_this();
+			asio::async_read(m_socket, readbuffer, 
+				[self](asio::error_code& ec, size_t length)
+				{
+					if (ec)
+					{
+						std::cout << "[" << GetId() << "] async_read Header Fail." << "\n";
+						self->Disconnect();
+						return;
+					}
+					OnSuccess();
+
+				});
+
+		}
+		template <typename Buffer>
+		void async_write(Buffer writebuffer, std::function<void()> OnSuccess)
+		{
+			auto self = this->shared_from_this();
+			asio::async_write(m_socket, writebuffer,
+				[self](asio::error_code& ec, size_t length)
+				{
+					if (ec)
+					{
+						std::cout << "[" << GetId() << "] async_write Header Fail." << "\n";
+						self->Disconnect();
+						return;
+					}
+					OnSuccess();
+
+				});
+
+		}
+
+
 	private:
 
 		void WriteHeader()
@@ -270,7 +324,7 @@ namespace netCommon
 						if (ec)
 						{
 							std::cout << "[" << self->id << "] Write Header Fail." << "\n";
-							self->m_socket.close();
+							self->Disconnect();
 							return;
 						}
 						if (buffer->size() > 0)
@@ -294,7 +348,7 @@ namespace netCommon
 					if (ec)
 					{
 						std::cout << "[" << self->id << "] Write Body Fail." << "\n";
-						self->m_socket.close();
+						self->Disconnect();
 						return;
 					}
 					if (!self->m_qMessageOut.empty())
@@ -318,16 +372,7 @@ namespace netCommon
 						if (ec)
 						{
 							std::cout << "[" << self->id << "] Read Header Fail." << ec.message() << "\n";
-
-							if (self->m_socket.is_open())
-							{
-								asio::error_code ecsocket;
-								self->m_socket.close(ecsocket);
-								if (ecsocket)
-								{
-									std::cout << "[" << self->id << "] close socket Fail." << ecsocket.message() << "\n";
-								}
-							}
+							self->Disconnect();
 							return;
 						}
 
@@ -361,7 +406,7 @@ namespace netCommon
 					if (ec)
 					{
 						std::cout << "[" << self->id << "] Read Body Fail." << ec.message()<< "\n";
-						self->m_socket.close();
+						self->Disconnect();
 						return;
 					}
 					self->AddToIncomingMessageQueue(*buffer);
@@ -399,7 +444,7 @@ namespace netCommon
 						}
 						else
 						{
-							self->m_socket.close();
+							self->Disconnect();
 						}
 					});
 			}
@@ -431,7 +476,7 @@ namespace netCommon
 								else
 								{
 									std::cout << "Client Disconnected (Fail Validation)" << std::endl;
-									self->m_socket.close();
+									self->Disconnect();
 								}
 							}
 							else
@@ -446,15 +491,15 @@ namespace netCommon
 						{
 							
 							std::cout << "Client Disconnected (ReadValidation)" << std::endl;
-							self->m_socket.close();
+							self->Disconnect();
 						}
 					});
 			}
 
 
-
 	protected:
 		uint32_t id = 0;
+		uint32_t uid = 0;
 		CheckValidation<uint64_t> m_handeshake;
 		owner m_ownerType;
 		asio::ip::tcp::socket m_socket;

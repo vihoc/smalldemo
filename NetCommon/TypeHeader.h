@@ -48,9 +48,17 @@ namespace netCommon
 			Client_Accepted,
 			HeartBeat,
 			HeartBeatStart,
+			RemovePLayer,
 
-			RequestMapSeedReq,
-			RequestMapSeedAck
+			RequestRoomInfoReq,
+			RequestRoomInfoAck,
+			RequestServerSeedReq,
+			RequestServerSeedAck,
+			RequestAddPLayerReq,
+			RequestAddPlayerAck,
+			RequestMovePLayerReq,
+			RequestMovePlayerAck,
+			SendPlayerMovement // for now
 
 		};
 	}

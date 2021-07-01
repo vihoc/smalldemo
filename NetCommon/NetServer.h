@@ -9,6 +9,7 @@
 #include "ServerHeartBeat.h"
 namespace netCommon
 {
+	constexpr uint32_t connectCountStart = 10000;
 	template <typename T>
 	class server_Interface
 	{
@@ -75,9 +76,16 @@ namespace netCommon
 							connection_type::owner::server, m_asioContext, std::move(socket), m_qMessageIn);
 						if (OnClientConnect(newconn))
 						{
-							newconn->ConnectToClient(this, m_nIDCounter++);
+							if (m_ConnectionMap.end() != m_ConnectionMap.find(m_nIDCounter))
+							{
+								std::cerr << "[" << m_nIDCounter << "] exist!" << std::endl;
+								newconn->Disconnect();
+								return;
+							}
+							newconn->ConnectToClient(this, m_nIDCounter);
 							std::cout << "[" << newconn->GetId() << "] Connection Approved" << "\n";
-							m_deqConnection.emplace_back(std::move(newconn));
+							
+							m_ConnectionMap.emplace(m_nIDCounter++, std::move(newconn));
 							
 
 						}
@@ -93,20 +101,35 @@ namespace netCommon
 		void clientDisconnect(std::shared_ptr<connection_type> client)
 		{
 			OnClientDisconnect(client);
-			client.reset();
+			
+			needDelete.emplace_back(client->GetId());
+			//client.reset();
 		}
 
 		void clearConnectDeque()
 		{
-			m_deqConnection.erase(std::remove(m_deqConnection.begin(), m_deqConnection.end(), nullptr), m_deqConnection.end());
+			if(!needDelete.empty())
+			{
+				for (auto& id : needDelete)
+				{ 
+					auto itor = m_ConnectionMap.find(id);
+					if(m_ConnectionMap.end() != itor)
+					{ 
+						m_ConnectionMap.erase(itor);
+					}
+				}
+			}
+
 		}
+
 		void NoticeClient(std::shared_ptr<connection_type> client, const message_type& msg)
 		{
 			if (client)
 			{ 
 				if (client->IsConnected())
 				{
-					client->Send(msg);
+					std::cout << "[" << client->GetId() << "]" << "Sending msg : " << (uint32_t)msg.header.id << "\n";
+ 					client->Send(msg);
 				}
 				else
 				{
@@ -119,13 +142,14 @@ namespace netCommon
 		bool NoticeAllClient(const message_type& msg , std::shared_ptr<connection_type> ignoreclient = nullptr)
 		{
 			bool InvaildClient = false;
-			for (auto& client : m_deqConnection)
+			for (auto& connectPair : m_ConnectionMap)
 			{
+				auto& client = connectPair.second;
 				if (client && client->IsConnected())
 				{
 					if (ignoreclient != client)
 					{
-						
+						std::cout << "[" << client->GetId() << "]" << "Broadcast msg : " << (uint32_t)msg.header.id << "\n";
 						client->Send(msg);
 					}
 				}
@@ -142,6 +166,16 @@ namespace netCommon
 			return true;
 		}
 
+		bool NoticeClientById(uint32_t id, message_type& msg)
+		{
+			auto itor = m_ConnectionMap.find(id);
+			if (m_ConnectionMap.end() == itor)
+			{
+				return false;
+			}
+			itor->second->send(msg);
+		}
+
 		void Update(size_t n_MaxMessage = -1, bool bWait = false)
 		{
 			if (bWait) m_qMessageIn.wait();
@@ -151,6 +185,15 @@ namespace netCommon
 				auto msg = m_qMessageIn.pop_front();
 				OnMessage(msg.remote, msg.msg);
 				MessageCount++;
+			}
+		}
+
+		void DisconnectClient(uint32_t id)
+		{
+			auto itor = m_ConnectionMap.find(id);
+			if (itor != m_ConnectionMap.end())
+			{
+				m_ConnectionMap.erase(itor);
 			}
 		}
 
@@ -177,13 +220,14 @@ public:
 
 	private:
 		uint16_t m_port;
-		uint32_t m_nIDCounter = 10000;
+		uint32_t m_nIDCounter = connectCountStart;
 		asio::io_context m_asioContext;
 		std::thread m_contextthread;
 		asio::ip::tcp::acceptor m_asioAcceptor;
 		
 		Ts_queue<owned_Message<T>> m_qMessageIn;
-		std::deque<std::shared_ptr<connection_type>> m_deqConnection;
+		std::unordered_map<uint32_t, std::shared_ptr<connection_type>> m_ConnectionMap;
+		std::vector<uint32_t> needDelete;
 		std::unique_ptr<serverHeartbeat_Interface<T>> heartbeat; 
 	};
 }
