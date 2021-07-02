@@ -165,14 +165,14 @@ struct RequestRoomInfoAck
 	template <typename T>
 	friend message<T>& operator << (message<T>& msg, const RequestRoomInfoAck& data)
 	{
-		msg.header.id = ServerMsgType::RequestAddPlayerAck;
+		msg.header.id = ServerMsgType::RequestRoomInfoAck;
 		msg << data.msgtext << data.roomid << data.userid;
-		
+		uint32_t size = data.info.size();
 		for (auto& player : data.info)
 		{
 			msg << player;
 		}
-		msg << data.info.size();
+		msg << size;
 		return msg;
 	}
 
@@ -300,11 +300,12 @@ struct RequestMovePlayerAck
 	{
 		msg.header.id = ServerMsgType::RequestMovePlayerAck;
 		msg << data.msgtext;
+		uint32_t size = info.size();
 		for (auto player : data.info)
 		{
 			msg << player;
 		}
-		msg << info.size();
+		msg << size;
 		return msg;
 	}
 
@@ -331,6 +332,15 @@ struct SendPlayerMovement
 	float x, y;
 	std::string state;
 	std::string msgtext = "RequestMovePlayerAck";
+	SendPlayerMovement() = default;
+	
+	SendPlayerMovement(RequestMovePLayerReq&& Req)
+	{
+		id = std::move(Req.id);
+		state = std::move(Req.state);
+		x = std::move(Req.x);
+		y = std::move(Req.y);
+	}
 
 	friend std::ostream& operator << (std::ostream& os, const SendPlayerMovement& msg)
 	{

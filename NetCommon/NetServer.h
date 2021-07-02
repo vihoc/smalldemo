@@ -197,6 +197,16 @@ namespace netCommon
 			}
 		}
 
+		bool is_clientConnected(uint32_t id)
+		{
+			auto itor = m_ConnectionMap.find(id);
+			if (itor != m_ConnectionMap.end())
+			{
+				return itor->second->IsConnected();
+			}
+			return false;
+		}
+
 	protected:
 		virtual bool OnClientConnect(std::shared_ptr<connection_type> client)
 		{

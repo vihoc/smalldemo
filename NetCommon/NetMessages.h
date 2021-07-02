@@ -84,6 +84,7 @@ namespace netCommon
 			std::memcpy(&size, msg.body.data() + pos, sizeof(uint32_t));
 			msg.body.resize(pos);
 			pos = msg.body.size() - size;
+			data.resize(size);
 			std::memcpy(data.data(), msg.body.data() + pos, size);
 			msg.body.resize(pos);
 
