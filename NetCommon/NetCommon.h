@@ -20,7 +20,7 @@
 #include <algorithm>
 #include <functional>
 
-//#define ASIO_STANDALONE
+#define ASIO_STANDALONE
 //#define ASIO_HAS_BOOST_DATE_TIME
 #include <asio.hpp>
 #include <asio/ts/buffer.hpp>

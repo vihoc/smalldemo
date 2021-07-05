@@ -10,6 +10,9 @@
 
 namespace netCommon
 {
+
+	
+
 	template<typename T>
 	class client_Interface
 	{

@@ -6,6 +6,20 @@
 
 namespace netCommon
 {
+
+	template <typename T>
+	bool isbigending() = delete;
+
+	template<>
+	inline bool isbigending<uint32_t>()
+	{
+		uint32_t data = 0;
+		char*  const ch = reinterpret_cast<char*>(&data);
+		*ch = 1;
+		return data == 1;
+	}
+
+
 	template <typename T>
 	struct Message_Header
 	{
